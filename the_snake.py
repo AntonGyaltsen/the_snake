@@ -37,7 +37,7 @@ SNAKE_COLOR = (0, 255, 0)
 FOOD_COLOR = (255, 255, 0)
 
 # Скорость движения змейки:
-SPEED = 10
+SPEED = 20
 
 # Список для случайного выбора направления в методе reset()
 directions = [UP, DOWN, LEFT, RIGHT]
@@ -54,6 +54,8 @@ clock = pygame.time.Clock()
 
 # Тут опишите все классы игры.
 class GameObject:
+    """Основной родительский класс, от которого наследуются остальные."""
+
     def __init__(
             self,
             body_color=BOARD_BACKGROUND_COLOR,
@@ -61,12 +63,18 @@ class GameObject:
     ):
         self.body_color = body_color
         self.position = position
+        """Инициализация атрибутов родительского класса"""
 
     def draw(self, surface):
+        """Абстрактный метод отрисовки, который переопределяется
+        в наследуемых игровых классах.
+        """
         pass
 
 
 class Apple(GameObject):
+    """Игровой класс яблоко, наследуемый от родительского класса"""
+
     def __init__(self):
         """Имя атрибута в super() не нужно, потому что в суперклассе
         только один недефолтный параметр.
@@ -75,12 +83,13 @@ class Apple(GameObject):
         self.position = self.randomize_position()
 
     def randomize_position(self):
+        """Метод для рандомизации позиции камня"""
         x = randint(0, (SCREEN_WIDTH // GRID_SIZE) - 1) * GRID_SIZE
         y = randint(0, (SCREEN_HEIGHT // GRID_SIZE) - 1) * GRID_SIZE
         return x, y
 
-    # Метод draw класса Apple
     def draw(self, surface):
+        """Метод для отрисовки яблока"""
         rect = pygame.Rect((self.position[0], self.position[1]),
                            (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(surface, self.body_color, rect)
@@ -88,6 +97,8 @@ class Apple(GameObject):
 
 
 class Rock(GameObject):
+    """Игровой класс камень, наследуемый от родительского класса"""
+
     def __init__(self):
         """Имя атрибута в super() не нужно, потому что в суперклассе
         только один недефолтный параметр.
@@ -96,6 +107,7 @@ class Rock(GameObject):
         self.position = self.randomize_position()
 
     def randomize_position(self):
+        """Метод для рандомизации позиции камня"""
         x = randint(0, (SCREEN_WIDTH // GRID_SIZE) - 1) * GRID_SIZE
         y = randint(0, (SCREEN_HEIGHT // GRID_SIZE) - 1) * GRID_SIZE
         return x, y
@@ -103,6 +115,7 @@ class Rock(GameObject):
         # Метод draw класса Rock
 
     def draw(self, surface):
+        """Метод для отрисовки камня"""
         rect = pygame.Rect((self.position[0], self.position[1]),
                            (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(surface, self.body_color, rect)
@@ -110,14 +123,18 @@ class Rock(GameObject):
 
 
 class WrongFood(GameObject):
+    """Игровой класс неправильная еда, наследуемый от родительского класса"""
+
     def __init__(self):
         """Имя атрибута в super() не нужно, потому что в суперклассе
         только один недефолтный параметр.
         """
         super().__init__(FOOD_COLOR)
         self.position = self.randomize_position()
+        """Инициализация атрибутов наследуемого класса"""
 
     def randomize_position(self):
+        """Метод для рандомизации позиции еды"""
         x = randint(0, (SCREEN_WIDTH // GRID_SIZE) - 1) * GRID_SIZE
         y = randint(0, (SCREEN_HEIGHT // GRID_SIZE) - 1) * GRID_SIZE
         return x, y
@@ -125,6 +142,7 @@ class WrongFood(GameObject):
         # Метод draw класса WrongFood
 
     def draw(self, surface):
+        """Метод для отрисовки еды"""
         rect = pygame.Rect((self.position[0], self.position[1]),
                            (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(surface, self.body_color, rect)
@@ -132,6 +150,8 @@ class WrongFood(GameObject):
 
 
 class Snake(GameObject):
+    """Игровой класс змея, наследуемый от родительского класса"""
+
     def __init__(
             self,
             positions=[((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))],
@@ -146,20 +166,20 @@ class Snake(GameObject):
         self.direction: tuple = direction
         self.next_direction: tuple = next_direction
         self.last: tuple = last  # Позиция последнего элемента
-
-        # Метод обновления направления после нажатия на кнопку
+        """Инициализация атрибутов наследуемого класса"""
 
     def update_direction(self):
+        """Метод обновления направления после нажатия на кнопку"""
         if self.next_direction:
             self.direction: tuple = self.next_direction
             self.next_direction = None
 
     def get_head_position(self) -> tuple:
+        """Метод для получения позиции головы"""
         return self.positions[0]
 
     def move(self):
-        # Возвращает кортеж, представляющий позицию головы,
-        # например (180, 140).
+        """Основной метод движения"""
         current_head_position: tuple = self.get_head_position()
         dx, dy = self.direction
         """Например, одно движение вправо это (1, 0), то есть для x смещение
@@ -173,8 +193,8 @@ class Snake(GameObject):
             (current_head_position[1] + dy * GRID_SIZE) % SCREEN_HEIGHT,
         )
 
-        # Проверка на коллизию
         if new_head_position in self.positions[2:]:
+            """Проверка на коллизию"""
             self.reset()
         self.positions.insert(0, new_head_position)
 
@@ -186,8 +206,8 @@ class Snake(GameObject):
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
 
-    # Метод draw класса Snake
     def draw(self, surface):
+        """Метод draw класса Snake"""
         # Отрисовка головы змейки
         head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(surface, self.body_color, head_rect)
@@ -198,15 +218,15 @@ class Snake(GameObject):
             pygame.draw.rect(surface, self.body_color, rect)
             pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
 
-        # Затирание последнего сегмента
         if self.last:
+            """Затирание последнего сегмента"""
             last_rect = pygame.Rect(
                 (self.last[0], self.last[1]), (GRID_SIZE, GRID_SIZE)
             )
             pygame.draw.rect(surface, BOARD_BACKGROUND_COLOR, last_rect)
 
-    # Сброс змейки в начальное состояние
     def reset(self):
+        """Сброс змейки в начальное состояние"""
         self.length = 1
         self.positions = [((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))]
         self.direction = choice(directions)
@@ -214,6 +234,7 @@ class Snake(GameObject):
 
 
 def handle_keys(gameobject):
+    """Обработка нажатия клавиш"""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -230,7 +251,7 @@ def handle_keys(gameobject):
 
 
 def main():
-    # Тут нужно создать экземпляры классов.
+    """Основная функция игры с вечным циклом"""
     snake = Snake()
     apple = Apple()
     rock = Rock()
