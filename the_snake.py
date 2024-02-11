@@ -37,7 +37,7 @@ SNAKE_COLOR = (0, 255, 0)
 FOOD_COLOR = (255, 255, 0)
 
 # Скорость движения змейки:
-SPEED = 20
+SPEED = 10
 
 # Список для случайного выбора направления в методе reset()
 directions = [UP, DOWN, LEFT, RIGHT]
@@ -56,13 +56,9 @@ clock = pygame.time.Clock()
 class GameObject:
     """Основной родительский класс, от которого наследуются остальные."""
 
-    def __init__(
-            self,
-            body_color=BOARD_BACKGROUND_COLOR,
-            position=((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2)),
-    ):
+    def __init__(self, body_color=BOARD_BACKGROUND_COLOR):
         self.body_color = body_color
-        self.position = position
+        self.position = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         """Инициализация атрибутов родительского класса"""
 
     def draw(self, surface):
@@ -79,7 +75,7 @@ class Apple(GameObject):
         """Имя атрибута в super() не нужно, потому что в суперклассе
         только один недефолтный параметр.
         """
-        super().__init__(APPLE_COLOR)
+        super().__init__(body_color=APPLE_COLOR)
         self.position = self.randomize_position()
 
     def randomize_position(self):
@@ -103,7 +99,7 @@ class Rock(GameObject):
         """Имя атрибута в super() не нужно, потому что в суперклассе
         только один недефолтный параметр.
         """
-        super().__init__(ROCK_COLOR)
+        super().__init__(body_color=ROCK_COLOR)
         self.position = self.randomize_position()
 
     def randomize_position(self):
@@ -111,8 +107,6 @@ class Rock(GameObject):
         x = randint(0, (SCREEN_WIDTH // GRID_SIZE) - 1) * GRID_SIZE
         y = randint(0, (SCREEN_HEIGHT // GRID_SIZE) - 1) * GRID_SIZE
         return x, y
-
-        # Метод draw класса Rock
 
     def draw(self, surface):
         """Метод для отрисовки камня"""
@@ -129,7 +123,7 @@ class WrongFood(GameObject):
         """Имя атрибута в super() не нужно, потому что в суперклассе
         только один недефолтный параметр.
         """
-        super().__init__(FOOD_COLOR)
+        super().__init__(body_color=FOOD_COLOR)
         self.position = self.randomize_position()
         """Инициализация атрибутов наследуемого класса"""
 
@@ -138,8 +132,6 @@ class WrongFood(GameObject):
         x = randint(0, (SCREEN_WIDTH // GRID_SIZE) - 1) * GRID_SIZE
         y = randint(0, (SCREEN_HEIGHT // GRID_SIZE) - 1) * GRID_SIZE
         return x, y
-
-        # Метод draw класса WrongFood
 
     def draw(self, surface):
         """Метод для отрисовки еды"""
@@ -152,20 +144,11 @@ class WrongFood(GameObject):
 class Snake(GameObject):
     """Игровой класс змея, наследуемый от родительского класса"""
 
-    def __init__(
-            self,
-            positions=[((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))],
-            length=1,
-            direction=RIGHT,
-            next_direction=None,
-            last=None,
-    ):
+    def __init__(self):
         super().__init__(body_color=SNAKE_COLOR)
-        self.positions: list = positions
-        self.length: int = length
-        self.direction: tuple = direction
-        self.next_direction: tuple = next_direction
-        self.last: tuple = last  # Позиция последнего элемента
+        self.reset()
+        self.next_direction: tuple = None
+        self.last: tuple = None  # Позиция последнего элемента
         """Инициализация атрибутов наследуемого класса"""
 
     def update_direction(self):
@@ -182,27 +165,15 @@ class Snake(GameObject):
         """Основной метод движения"""
         current_head_position: tuple = self.get_head_position()
         dx, dy = self.direction
-        """Например, одно движение вправо это (1, 0), то есть для x смещение
-        будет 20. При x = 640, 640 % 640 = 0
-        то есть змейка появится слева. Аналогично с y.
-        current_head_position[0] извлекает x-координату из кортежа.
-        new_head_position тоже кортеж (x, y)
-        """
         new_head_position: tuple = (
             (current_head_position[0] + dx * GRID_SIZE) % SCREEN_WIDTH,
             (current_head_position[1] + dy * GRID_SIZE) % SCREEN_HEIGHT,
         )
 
         if new_head_position in self.positions[2:]:
-            """Проверка на коллизию"""
             self.reset()
         self.positions.insert(0, new_head_position)
 
-        """Проверка на движение или поглощение яблока.
-        При поглощении яблока length увеличивается
-        и тогда хвост оставляется. self.last получает значение
-        для передачи в метод затирания последнего элемента.
-        """
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
 
@@ -219,7 +190,6 @@ class Snake(GameObject):
             pygame.draw.rect(surface, BORDER_COLOR, rect, 1)
 
         if self.last:
-            """Затирание последнего сегмента"""
             last_rect = pygame.Rect(
                 (self.last[0], self.last[1]), (GRID_SIZE, GRID_SIZE)
             )
@@ -228,7 +198,7 @@ class Snake(GameObject):
     def reset(self):
         """Сброс змейки в начальное состояние"""
         self.length = 1
-        self.positions = [((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))]
+        self.positions = [self.position]
         self.direction = choice(directions)
         screen.fill(BOARD_BACKGROUND_COLOR)
 
@@ -264,17 +234,10 @@ def main():
         apple.draw(screen)
         rock.draw(screen)
         junkfood.draw(screen)
-
-        # Функция обработки действий пользователя
         handle_keys(snake)
-
-        # Тут опишите основную логику игры.
-        # Обновление направления движения змейки.
         snake.update_direction()
-        # Само движение.
         snake.move()
 
-        # Проверка на поглощение яблока, столкновение с собой или с камнем.
         if snake.positions[0] == apple.position:
             snake.length += 1
             apple.position = apple.randomize_position()
@@ -284,11 +247,11 @@ def main():
             snake.reset()
             rock.position = rock.randomize_position()
         elif snake.positions[0] == junkfood.position:
-            if len(snake.positions) > 1:  # Проверяем сколько сегментов у змеи
+            if len(snake.positions) > 1:
                 snake.length -= 1
                 junkfood.position = junkfood.randomize_position()
                 snake.last = snake.positions.pop()
-            else:  # Сброс если сегмент только один
+            else:
                 snake.reset()
 
         pygame.display.update()
